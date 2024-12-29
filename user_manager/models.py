@@ -83,7 +83,8 @@ class Product(models.Model):
     avg_rating = models.IntegerField(default=0)
     rating_count = models.IntegerField(default=0)
     category = models.CharField(max_length=50, default="General")
-
+    image = models.ImageField(upload_to='products/')
+    
     def __str__(self):
         return f'{self.name} - {self.merchant.business_name}'
 

@@ -51,11 +51,9 @@ class LoginView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if the password matches
         if user.password != password:
             return Response({"error": "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create refresh and access tokens
         refresh = RefreshToken.for_user(user)
 
         return Response({

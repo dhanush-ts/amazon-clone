@@ -1,6 +1,7 @@
 from django.db import models
 from user_manager.models import User, Product
 import json
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Cart(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -29,3 +30,15 @@ class Order(models.Model):
             return json.loads(self.cart_items) 
         except json.JSONDecodeError:
             return []
+        
+class Review(models.Model):
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    rating = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Review {self.id} for {self.product.name}"

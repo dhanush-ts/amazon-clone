@@ -9,27 +9,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class MerchantSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer()  # Nested CustomUser serializer
-
+    phone = serializers.CharField(write_only=True)
+    business_name = serializers.CharField(write_only=True)
+    business_address = serializers.CharField(write_only=True)
+    
     class Meta:
-        model = Merchant
-        fields = ['id', 'user', 'phone', 'business_name', 'business_address']
-
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = CustomUser.objects.create(**user_data)  # Create user object first
-        merchant = Merchant.objects.create(user=user, **validated_data)  # Create merchant object with user
-        return merchant
-
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop('user', None)
-        if user_data:
-            # Update user if data is passed
-            for attr, value in user_data.items():
-                setattr(instance.user, attr, value)
-            instance.user.save()
-
-        return super().update(instance, validated_data)
+        model = CustomUser
+        fields = ['email', 'password', 'username', 'phone', 'business_name', 'business_address']
+        extra_kwargs = {
+            'password': {'write_only': True},
+        }
 
 class ProductSerializer(serializers.ModelSerializer):
     merchant = MerchantSerializer(read_only=True)  # Nested Merchant serializer
@@ -46,24 +35,11 @@ class ProductSerializer(serializers.ModelSerializer):
     #     return super().create(validated_data)
 
 class UserSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer()
+    address = serializers.CharField(write_only=True)
 
     class Meta:
-        model = User
-        fields = ['id', 'user', 'address']
-
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = CustomUser.objects.create(is_user=True, **user_data)  # Create user object with is_user set
-        user_profile = User.objects.create(user=user, **validated_data)  # Create user profile
-        return user_profile
-
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop('user', None)
-        if user_data:
-            # Update user if data is passed
-            for attr, value in user_data.items():
-                setattr(instance.user, attr, value)
-            instance.user.save()
-
-        return super().update(instance, validated_data)
+        model = CustomUser
+        fields = ['email', 'password', 'username', 'address']
+        extra_kwargs = {
+            'password': {'write_only': True},
+        }

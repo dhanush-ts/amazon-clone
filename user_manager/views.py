@@ -10,14 +10,6 @@ from .models import CustomUser
 from rest_framework import generics
 from user_manager.permissions import IsMerchantorReadOnly, IsMerchant
 
-class CustomUserViewSet(viewsets.ModelViewSet):
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-
-class MerchantViewSet(viewsets.ModelViewSet):
-    queryset = Merchant.objects.all()
-    serializer_class = MerchantSerializer
-
 class ProductAPIView(generics.ListCreateAPIView):
     permission_classes = [IsMerchantorReadOnly]
     queryset = Product.objects.all()
@@ -33,9 +25,33 @@ class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+class UserView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = UserSerializer
+
+    def perform_create(self, serializer):
+        username = self.request.data.get('username')
+        password = self.request.data.get('password')
+        email = self.request.data.get('email')
+        address = self.request.data.get('address')
+        custom_user = CustomUser.objects.create_user(username=username, email=email, password=password)
+        User.objects.create(user=custom_user, address=address)
+        serializer.instance = custom_user
+        
+class MerchantView(generics.CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = MerchantSerializer
+    
+    def perform_create(self, serializer):
+        username = self.request.data.get('username')
+        password = self.request.data.get('password')
+        email = self.request.data.get('email')
+        business_address = self.request.data.get('business_address')
+        business_name = self.request.data.get('business_name')
+        phone = self.request.data.get('phone')
+        custom_user = CustomUser.objects.create_user(username=username, email=email, password=password)
+        Merchant.objects.create(user=custom_user, business_address=business_address, phone=phone, business_name=business_name)
+        serializer.instance = custom_user
 
 class LoginView(APIView):
     permission_classes = [AllowAny]

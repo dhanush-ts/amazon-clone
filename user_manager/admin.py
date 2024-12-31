@@ -3,7 +3,7 @@ from .models import CustomUser, Merchant, Product, User
 
 # Custom User Admin
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ('email', 'username', 'is_merchant', 'is_user', 'is_staff', 'is_active', 'date_joined')
+    list_display = ('email', 'username', 'is_merchant', 'is_user', 'date_joined')
     search_fields = ('email', 'username')
     list_filter = ('is_merchant', 'is_user', 'is_staff', 'is_active')
     ordering = ('-date_joined',)

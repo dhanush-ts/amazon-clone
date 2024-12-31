@@ -35,11 +35,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
     
-    # def check_password(self, raw_password):
-    #     return super().check_password(raw_password)
-    
     def save(self, *args, **kwargs):
-        # Automatically set is_merchant or is_user based on Merchant relationship
         if hasattr(self, 'merchant_profile'):
             self.is_merchant = True
             self.is_user = False
@@ -60,12 +56,10 @@ class Merchant(models.Model):
     business_address = models.CharField(max_length=100)
     
     def save(self, *args, **kwargs):
-        # Set is_merchant to True and is_user to False when creating a merchant profile
         self.user.is_merchant = True
         self.user.is_user = False
-        self.user.save()  # Save the user to update the fields
-
-        super().save(*args, **kwargs)  #
+        self.user.save()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.user.username} - {self.business_name}'
@@ -104,10 +98,9 @@ class User(models.Model):
     address = models.CharField(max_length=255)
     
     def save(self, *args, **kwargs):
-        # Set is_merchant to True and is_user to False when creating a merchant profile
         self.user.is_merchant = False
         self.user.is_user = True
-        self.user.save()  # Save the user to update the fields
+        self.user.save()
 
         super().save(*args, **kwargs)  #
 

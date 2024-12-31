@@ -58,7 +58,6 @@ class LoginView(APIView):
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
-        
         if not username or not password:
             return Response({"error": "Username and password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -67,7 +66,7 @@ class LoginView(APIView):
         except CustomUser.DoesNotExist:
             return Response({"error": "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if user.password != password:
+        if user.password != password and not user.check_password(password):
             return Response({"error": "Invalid username or password"}, status=status.HTTP_400_BAD_REQUEST)
 
         refresh = RefreshToken.for_user(user)

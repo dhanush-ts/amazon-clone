@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cart, Order, Review
+from .models import Cart, Order, Review, Return
 
 class CartSerializer(serializers.ModelSerializer):
     customer = serializers.StringRelatedField(read_only=True)
@@ -53,4 +53,13 @@ class ReviewSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Review
+        fields = '__all__'
+        
+class ReturnSerializer(serializers.ModelSerializer):
+    order = serializers.StringRelatedField(read_only=True)
+    product = serializers.StringRelatedField(read_only=True)
+    customer = serializers.StringRelatedField(read_only=True)
+    
+    class Meta:
+        model = Return
         fields = '__all__'

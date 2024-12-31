@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from rest_framework import generics
-from .models import Cart, Order, Review
+from .models import Cart, Order, Review, Return
 from user_manager.models import Product, User
-from .serializer import CartSerializer, OrderSerializer, OrderListSerializer, ReviewSerializer
+from .serializer import CartSerializer, OrderSerializer, OrderListSerializer, ReviewSerializer, ReturnSerializer
 from user_manager.permissions import IsUser
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 import json
+from datetime import timedelta
+from django.utils import timezone
 from user_manager.permissions import IsUserOrReadOnly
 
 class CartCreateView(generics.CreateAPIView):
@@ -125,3 +127,50 @@ class ReviewDetails(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsUserOrReadOnly]
     lookup_field = 'id'
     queryset = Review.objects.all()
+    
+class ReturnView(generics.CreateAPIView):
+    serializer_class = ReturnSerializer
+    permission_classes = [IsUserOrReadOnly]
+
+    def perform_create(self, serializer):
+        order_id = self.kwargs.get('order_id')
+        product_id = self.kwargs.get('product_id')
+
+        if not order_id or not product_id:
+            raise ValidationError("Order ID and Product ID are required in the URL.")
+
+        order = get_object_or_404(Order, id=order_id)
+        product = get_object_or_404(Product, id=product_id)
+        user = self.request.user
+        user = get_object_or_404(User, user=user)
+
+        if self.request.user != order.customer.user:
+            raise ValidationError("You are not the order's customer.")
+        
+        retu = Return.objects.filter(product=product, order=order)
+        if retu.exists():
+            raise ValidationError("Product already returned.")
+        time_difference = timezone.now() - order.created_at
+        if time_difference > timedelta(hours=24):
+            raise ValidationError("Product can only be returned within 24 hours of the order.")
+
+
+        for i in order.cart_items_data:
+            if int(i['product_id']) == int(product.id):
+                if int(i['quantity']) >= int(self.request.data.get("quantity")):
+                    product.quantity += int(self.request.data.get("quantity"))
+                    product.save()
+                    return_instance = serializer.save(product=product,order=order,customer=user, quantity_returned=int(self.request.data.get('quantity')))
+                    return return_instance
+                else:
+                    raise ValidationError("Not enough quantity to return.")
+        raise ValidationError("Product not found in the order.")
+
+class ReturnDetails(generics.ListAPIView):
+    serializer_class = ReturnSerializer
+    permission_classes = [IsUserOrReadOnly]
+    lookup_field = 'order_id'
+    
+    def get_queryset(self):
+        order_id = self.kwargs.get('order_id')
+        return Return.objects.filter(order__id=order_id)
